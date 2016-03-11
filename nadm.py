@@ -37,15 +37,14 @@ def _add(host, ipaddr):
   fp.write("  alias " + host + "\n")
   fp.write("  address " + ipaddr + "\n")
   fp.write("}\n")
-
-#define service{
-#  use       generic-service
-#  host_name KCT_HyundeaHS_Life
-#  service_description Alive
-#3  check_command check-host-alive
-#}
+  fp.write("define service{\n")
+  fp.write("  use       generic-service\n")
+  fp.write("  host_name " + host + "\n")
+  fp.write("  service_description Alive\n")
+  fp.write("  check_command check-host-alive\n")
+  fp.write("}\n")
   fp.close()
-  print("Done, please restart nagios")
+  print("added, please restart nagios")
   sys.exit()
 
 def _del(host):
@@ -55,6 +54,7 @@ def _del(host):
     sys.exit(1)
   # are you sure?
   os.unlink(fname)
+  print("deleted, please restart nagios")
   sys.exit()
 
 if __name__ == '__main__' :
