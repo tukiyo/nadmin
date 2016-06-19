@@ -1,68 +1,53 @@
 #!/usr/bin/env python 
-
 import os
-import sys
-
-dir = '/etc/nagios3/conf.d/'
-version = "0.9"
-
-def _list():
-  """List hosts"""
-  for f in os.listdir(dir) :
-    if 'nagios' in f : continue
-    print f
-def _print_header():
-  print("nadm v" + version + ": nagios admin")
-
+import sys 
+dir = '/etc/nagios3/conf.d'
+#------------------------------------------------------
 def _help(emsg=""):
   if emsg != "" : print( "Error: "+emsg)
-  print("\tlist\t\tlist hosts")
-  print("\tadd [host] [ipaddress] \tadd a host and ipaddress to ping")
-  print("\tdel [host]\tdelete a host")
+  print("usage: "+sys.argv[0]+" group host ip")
+  _list()
   sys.exit(1)
 
-def _is_exist_host(fname) :
-  if os.path.isfile(fname): return True
-  return False
+def _list():
+  for f in os.listdir(dir) :
+      if not '_nagios2.cfg' in f:
+          print "\t"+dir +"/"+ f
 
-def _add(host, ipaddr):
-  fname = dir+"/" + host + ".cfg"
-  if _is_exist_host(fname) : 
-    print("Error: host already exist")
-    sys.exit(1)
-  fp = open(fname, 'w')
-  fp.write("define host{\n")
-  fp.write("use       generic-host\n")
-  fp.write("  host_name " + host + "\n")
-  fp.write("  alias " + host + "\n")
-  fp.write("  address " + ipaddr + "\n")
-  fp.write("}\n")
-  fp.write("define service{\n")
-  fp.write("  use       generic-service\n")
-  fp.write("  host_name " + host + "\n")
-  fp.write("  service_description Alive\n")
-  fp.write("  check_command check-host-alive\n")
-  fp.write("}\n")
+def _add(group, host, ip):
+  _write(_define_host(group, host, ip), dir+"/host_" + group + ".cfg")
+  _write(_define_chek(group, host, ip), dir+"/host_" + group + "_check.cfg")
+  _list()
+
+def _define_host(group, host, ip):
+  txt = "# "+host+" ("+ip+")\n"
+  txt+= "define host{\n"
+  txt+= "    use        generic-host\n"
+  txt+= "    host_name  " + group + "-" + host + "\n"
+  txt+= "    alias      " + host + "\n"
+  txt+= "    address    " + ip + "\n"
+  txt+= "#   check_command \treturn-ok\n"
+  txt+= "    }\n\n"
+  return txt
+
+# see: /usr/lib/nagios/plugins/
+def _define_chek(group, host, ip):
+  txt = "## "+host+"("+ip+")\n"
+  txt+= "#define service{\n"
+  txt+= "#    service_description Alive\n"
+  txt+= "#    host_name           " + group + "-" + host + "\n"
+  txt+= "#    use                 generic-service\n"
+  txt+= "#    check_command       check-host-alive\n"
+  txt+= "#    }\n\n"
+  return txt
+
+def _write(txt, fname):
+  fp = open(fname, 'a+')
+  fp.write(txt)
   fp.close()
-  print("added, please restart nagios")
-  sys.exit()
-
-def _del(host):
-  fname = dir+"/" + host + ".cfg"
-  if not _is_exist_host(fname) :
-    print("Error: host not found")
-    sys.exit(1)
-  # are you sure?
-  os.unlink(fname)
-  print("deleted, please restart nagios")
-  sys.exit()
-
+#------------------------------------------------------
 if __name__ == '__main__' :
-  _print_header()
   if len(sys.argv) == 1 : _help()
-  elif sys.argv[1] == 'list' : _list()
-  elif sys.argv[1] == 'add' and len(sys.argv) != 4 : _help("more arguments for add command")
-  elif sys.argv[1] == 'add' : _add(sys.argv[2], sys.argv[3])
-  elif sys.argv[1] == 'del' and len(sys.argv) != 3 : _help("more argements for del command")
-  elif sys.argv[1] == 'del' : _del(sys.argv[2])
-
+  elif len(sys.argv) != 4 : _help("more arguments for add command")
+  _add(sys.argv[1], sys.argv[2], sys.argv[3])
+  print("check: nagios3 -v /etc/nagios3/nagios.cfg && service nagios3 restart")
