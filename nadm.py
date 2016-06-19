@@ -1,7 +1,8 @@
 #!/usr/bin/env python 
 import os
 import sys 
-dir = '/etc/nagios3/conf.d'
+#dir = '/etc/nagios3/conf.d'
+dir = '.'
 #------------------------------------------------------
 def _help(emsg=""):
   if emsg != "" : print( "Error: "+emsg)
